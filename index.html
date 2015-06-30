@@ -1,0 +1,37 @@
+<!-- This file needs to be hosted on an external server.  -->
+<html>
+<head>
+<script type="text/javascript" src='./js/jquery-1.9.1.js'></script>
+<script type="text/javascript" src='./js/jquery-ui.js'></script>
+<script type="text/javascript" src='./js/startup.js'></script>
+</head>
+
+<!--<body id="body" style="visibility:hidden;" onload="javascript:StartAMT();"> --!>
+<body id="body" onload="javascript:StartAMT();">
+	
+	<!-- Mechanical Turk instructions and submit button --!>
+	<div id="mt_submit_form"></div>
+	
+	<form id="mturk_form" method="POST" action="https://www.mturk.com/mturk/externalSubmit">
+		<input type="hidden" id="assignmentId" name="assignmentId" value="">
+
+		<table border="0" height="100%" width="100%">
+			<tr><td>
+				<h1>What type of webpage is shown?</h1>
+				<p>
+					<input type="radio" name="category" value="news">&nbsp;News Site<br>
+					<input type="radio" name="category" value="search">&nbsp;Search Engine<br>
+					<input type="radio" name="category" value="retail">&nbsp;Online Retailer<br>
+					<input type="radio" name="category" value="other" selected>&nbsp;Other<br>
+				<p>
+					<input id="submitButton" type="submit" name="Submit" value="Submit">
+				<p>
+			</td></tr>
+
+		</table>
+
+	</form>
+
+</body>
+
+</html>
