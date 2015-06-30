@@ -1,0 +1,8 @@
+# ./anno stores the selection choices
+   each video has a folder and each frame has a json file
+
+# ./answer stores the answers from turkers
+   each video has a folder and each frame has a json file
+	
+
+
