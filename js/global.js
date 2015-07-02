@@ -9,4 +9,8 @@ var choices_dict = null; // flat choices
 var is_a_relation = {};
 var has_a_relation = {};
 
-var n_checked;
+var selection_list = [];
+var n_checked = 0;
+var choices_dict = {};
+
+var image = null;
