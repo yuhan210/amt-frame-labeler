@@ -4,6 +4,8 @@ var externalSubmitURLsandbox = 'https://workersandbox.mturk.com/mturk/externalSu
 
 var n_choices = 20;
 
+var fixed_im_width = 600;
+
 var choices_dict = null; // flat choices
 
 var is_a_relation = {};

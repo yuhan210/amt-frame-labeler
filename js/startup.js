@@ -23,7 +23,9 @@ function StartAMT() {
 };
 
 function onSubmit(event){
-
+	alert(event);
+	alert(document.getElementById(select_value));
+	//console.log(selection_list);	
 
 };
 
@@ -96,12 +98,13 @@ function onCheck(event){
 
 	document.getElementById("n_selections").value = n_checked;	
 	if (n_checked > 0) {
+			document.getElementById("none").disabled = true;
 			document.getElementById("mt_submit").disabled = false;
 	}else {
 			document.getElementById("mt_submit").disabled = true;
 	}
 
-	//console.log(selection_list);
+	console.log(selection_list);
 	document.getElementById("selections").value = selection_list.join();
 	
 };
@@ -115,6 +118,7 @@ function page(){
 	this.video = null;
 	this.frame_name = null;
 	this.image = null;
+	this.turkSubmitTo = null;
 
 	this.setChoicePos = function () {
 		var d = document.getElementById('choice_region');
@@ -154,7 +158,7 @@ function page(){
 			$('#choice_region').append(html_str);
 
 			// render choices
-			var checkbox_str = '';
+			var checkbox_str = '<table>';
 			for (i = 0; i < Math.min(n_choices, total_choice); i++)	{
 				
 				choice = jsonObj.choices[i];
@@ -191,6 +195,12 @@ function page(){
 
 				checkbox_str += '</tr>'
 			}
+			// adding the none of the above option
+			choices_dict["none"] = false;
+			checkbox_str += '<tr>';
+			checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="none" value="none" id="none">None of the above <br></td>';
+			checkbox_str += '</tr>';
+			checkbox_str += '</table>';
 			$('#choice_region').append(checkbox_str);
 			
 			// submit button
@@ -198,6 +208,9 @@ function page(){
 				+ '<tr><td>'
        	   + '<form action="' + externalSubmitURLsandbox + '">'
 				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ this.assignmentId +'" />'
+				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ this.turkSubmitTo +'" />'
+				+ '<input type="hidden" id="hitId" name="hitId" value="'+ this.hitId +'" />'
+				+ '<input type="hidden" id="workerId" name="workerId" value="'+ this.workerId +'" />'
 				+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
 				+ '<input type="hidden" id="selections" name="selections" value="" />'
 				+ '<input type="hidden" id="video" name="video" value="' + this.video + '" />'
@@ -244,7 +257,10 @@ function page(){
 			console.log(image);
 			console.log('loaded. width:' + image.width + ', height:' + image.height );
 			// determine image size
-			var im_ratio = 780/image.width;
+			var im_ratio = 1;
+			if (image.width > fixed_im_width){
+				im_ratio = fixed_im_width/image.width;
+			}
 		
 			image.width = Math.round(im_ratio*image.width);
 			image.height = Math.round(im_ratio*image.height);
@@ -295,6 +311,10 @@ function page(){
 			
 				if (par_field == 'frame_name') {
 					this.frame_name = par_value;				
+				}
+			
+				if (par_field == 'turkSubmitTo') {	
+					this.turkSubmitTo = par_value;
 				}
 
 				console.log('field: ' + par_field + ' value:' + par_value);
