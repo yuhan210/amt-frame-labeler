@@ -84,28 +84,54 @@ function onCheck(event){
 		}
 	}
 
+	if (select_value.indexOf("_none") >= 0 && event.checked) {
+		// disable all other labels
+		keys = Object.keys(choices_dict);
+		for (i = 0 ; i < keys.length; i++){
+			if (keys[i].indexOf('_none') < 0) {
+				document.getElementById(keys[i]).disabled = true;
+			}
+		}
+	} else if (select_value.indexOf("_none") >= 0 && event.checked == false ){
+		// enable all other labels
+		keys = Object.keys(choices_dict);
+		for (i = 0 ; i < keys.length; i++){
+			if (keys[i].indexOf('_none') < 0) {
+				document.getElementById(keys[i]).disabled = false;
+			}
+		}
+	
+	}
 	//console.log(selection_list);	
-
 	// Set all the data structures
 	// if selected more 1 make submit visible	
 	n_checked = 0;	
+	n_checked_wtnone = 0;
 	keys = Object.keys(choices_dict);
 	for (i = 0 ; i < keys.length; i++){
 		if (choices_dict[keys[i]]) {
 			n_checked += 1;
 		}
-	}
 
+		if (keys[i].indexOf('_none') < 0 && choices_dict[keys[i]]) {
+	  		n_checked_wtnone += 1;
+		}
+	}
 
 	document.getElementById("n_selections").value = n_checked;	
 	if (n_checked > 0) {
-			document.getElementById("none").disabled = true;
 			document.getElementById("mt_submit").disabled = false;
 	}else {
 			document.getElementById("mt_submit").disabled = true;
 	}
+	
+	if (n_checked_wtnone > 0) {
+			document.getElementById("_none").disabled = true;
+	} else{
+			document.getElementById("_none").disabled = false;
+	}
 
-	console.log(selection_list);
+	//console.log(selection_list);
 	document.getElementById("selections").value = selection_list.join();
 	
 };
@@ -147,7 +173,7 @@ function page(){
 		if (anno_req.status == 200) {
 			
 			var jsonObj = JSON.parse(anno_req.responseText);
-			console.log(jsonObj.choices);
+//			console.log(jsonObj.choices);
 			total_choice = Object.keys(jsonObj.choices).length;
 			max_col = getMaxCols(jsonObj, total_choice);
 			// intro word
@@ -205,13 +231,13 @@ function page(){
 				checkbox_str += '</tr>'
 			}
 			// adding the none of the above option
-			choices_dict["none"] = false;
+			choices_dict["_none"] = false;
 			if (Math.min(n_choices, total_choice)%2 == 0) {
 				checkbox_str += '<tr class="even">';
 			}else{
 				checkbox_str += '<tr class="odd">';
 			}
-			checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="none" value="none" id="none">None of the above <br></td>';
+			checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="_none" value="_none" id="_none">None of the above <br></td>';
 			for ( i = 0; i < (max_col - 1); ++i ){
 					checkbox_str += '<td></td>';	
 			}
@@ -222,7 +248,7 @@ function page(){
 			// submit button
          var html_submit_str = '<table>'
 				+ '<tr><td>'
-       	   + '<form action="' + externalSubmitURLsandbox + '">'
+       	   + '<form action="' + submitURL + '">'
 				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ this.assignmentId +'" />'
 				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ this.turkSubmitTo +'" />'
 				+ '<input type="hidden" id="hitId" name="hitId" value="'+ this.hitId +'" />'
@@ -250,7 +276,7 @@ function page(){
 
 	};
 	this.loadImage = function () {
-			console.log('loading...');
+			//console.log('loading...');
 			this.image = new Image();
 			this.image.src = this.getImagePath();
 			this.image.onload = function() {
@@ -270,8 +296,8 @@ function page(){
 	function renderImage(e) {
 			
 			var image = e;	
-			console.log(image);
-			console.log('loaded. width:' + image.width + ', height:' + image.height );
+			//console.log(image);
+			//console.log('loaded. width:' + image.width + ', height:' + image.height );
 			// determine image size
 			var im_ratio = 1;
 			if (image.width > fixed_im_width){
@@ -283,13 +309,13 @@ function page(){
 			
 			document.getElementById('image_region').style.float = 'left';
 			var html_str =  '<img src="' + image.src + '" width="' + image.width + '" height="' + image.height +'"> </img>';
-			console.log(html_str);
+			//console.log(html_str);
 			$('#image_region').append(html_str);
 			
 			// diable loading image effect.
 			document.getElementById('loading').style.visibility = 'hidden';
 			document.getElementById('loading').style.display = 'none';
-         //document.getElementById('main_media').style.visibility = 'visible';
+         document.getElementById('main_media').style.visibility = 'visible';
 
 	};
 
@@ -330,10 +356,15 @@ function page(){
 				}
 			
 				if (par_field == 'turkSubmitTo') {	
+					if (par_value.indexOf("sandbox") >= 0) {
+						submitURL = externalSubmitURLsandbox;
+					}else{
+						submitURL = externalSubmitURL;
+					}
 					this.turkSubmitTo = par_value;
 				}
 
-				console.log('field: ' + par_field + ' value:' + par_value);
+				//console.log('field: ' + par_field + ' value:' + par_value);
 				
 				par_str = par_str.substring(idx+1, par_str.length);
 
