@@ -1,6 +1,39 @@
 <!-- This file needs to be hosted on an external server.  -->
 <html>
 <head>
+<style type='text/css'>
+
+table.choiceTable {
+	border:1px solid black; 
+	border-collapse: collapse;
+	
+}
+table.choiceTable th {
+
+	border: 0;
+	background-color: black;
+	color: white;
+	border-bottom:1px solid #000;
+	border-top:1px solid #000;
+}
+
+td.firstCol {
+
+	border-right:2px solid black;
+	border-bottom:2px solid #000;
+	border-top:1px solid #000;
+}
+
+table.choiceTable td.otherCol {
+	border: 2px;
+	border-bottom:2px solid #000;
+	border-top:1px solid #000;
+}
+
+
+
+</style>
+
 <script type="text/javascript" src='./js/jquery-1.11.3.js'></script>
 <script type="text/javascript" src='./js/jquery-ui.js'></script>
 <script type="text/javascript" src='./js/global.js'></script>
@@ -19,7 +52,7 @@
 
 	</div>
 
-   <div id="mt_feedback" style="position:absolute;bottom:4px;" />
+   <div id="mt_feedback" />
 	
 
 </body>

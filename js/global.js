@@ -2,7 +2,7 @@ var externalSubmitURL = 'https://www.mturk.com/mturk/externalSubmit';
 
 var externalSubmitURLsandbox = 'https://workersandbox.mturk.com/mturk/externalSubmit';
 
-var n_choices = 20;
+var n_choices = 15;
 
 var fixed_im_width = 600;
 

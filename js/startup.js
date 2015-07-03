@@ -15,7 +15,6 @@ function StartAMT() {
 		page.loadChoices();
 
 	}else{
-
 		return;
 	}	
 		
@@ -26,6 +25,8 @@ function onSubmit(event){
 	alert(event);
 	alert(document.getElementById(select_value));
 	//console.log(selection_list);	
+     //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
+
 
 };
 
@@ -148,29 +149,37 @@ function page(){
 			var jsonObj = JSON.parse(anno_req.responseText);
 			console.log(jsonObj.choices);
 			total_choice = Object.keys(jsonObj.choices).length;
-
+			max_col = getMaxCols(jsonObj, total_choice);
 			// intro word
          var html_str = '<table>'
 				+ '<tr><td>'
-				+ '<tr><td> <font size="4"><b> Select all words that describe this image. </b></font> </tr></td>' 
+				+ '<tr><td> <font size="4"><b> Select all words that describe the contents in this image. </b></font> </tr></td>' 
 				+ '</td></tr></table>';
 
 			$('#choice_region').append(html_str);
 
 			// render choices
-			var checkbox_str = '<table>';
+		 	var checkbox_str = '<table class="choiceTable">';
+			if (max_col > 1) {
+				checkbox_str += '<th class="firstCol"> Tags </th> <th>General Tags </th>'
+				for (i = 0; i < max_col - 2; ++i){
+					checkbox_str += '<th> </th>';
+				}
+			}else{
+				checkbox_str += '<th> Tags </th>'
+			}
 			for (i = 0; i < Math.min(n_choices, total_choice); i++)	{
 				
 				choice = jsonObj.choices[i];
 				segs = choice.split('->');	
 		
-				checkbox_str += '<tr>';
+				checkbox_str += '<tr>'	
 				if (segs.length == 1) { 
 					
 					seg_id = i + '-' + segs[0];	
 					
 					choices_dict[seg_id] = false;
-					checkbox_str += '<td>';
+					checkbox_str += '<td class="firstCol">';
 					checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[0] + '<br>';
 					checkbox_str += '</td>';	
 
@@ -187,10 +196,18 @@ function page(){
 						}
 						//console.log(is_a_relation);
 						choices_dict[seg_id] = false;
-						checkbox_str += '<td>';	
-						checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
+						if ( j == 0 ){
+							checkbox_str += '<td class = "firstCol">';
+						}else{
+							checkbox_str += '<td class = "otherCol">';
+						}
+							checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
 						checkbox_str += '</td>';	
 					}
+				}
+				// fill in some dummy cols
+				for ( j = 0; j < (max_col - segs.length); ++j ){
+						checkbox_str += '<td class="otherCol"></td>';	
 				}
 
 				checkbox_str += '</tr>'
@@ -198,7 +215,10 @@ function page(){
 			// adding the none of the above option
 			choices_dict["none"] = false;
 			checkbox_str += '<tr>';
-			checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="none" value="none" id="none">None of the above <br></td>';
+			checkbox_str += '<td class="firstCol"><input type="checkbox" onclick="onCheck(this);"  name="none" value="none" id="none">None of the above <br></td>';
+			for ( i = 0; i < (max_col - 1); ++i ){
+					checkbox_str += '<td class="otherCol"></td>';	
+			}
 			checkbox_str += '</tr>';
 			checkbox_str += '</table>';
 			$('#choice_region').append(checkbox_str);
@@ -216,16 +236,16 @@ function page(){
 				+ '<input type="hidden" id="video" name="video" value="' + this.video + '" />'
 				+ '<input type="hidden" id="frame_name" name="frame_name" value="' + this.frame_name + '" />'
 				+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
-				+ '<input disabled="true" type="submit" id="mt_submit" name="Submit" value="Submit HIT" onclieck="onSubmit(this);" />'
+				+ '<input disabled="true" type="submit" style="height:50px; width:300px" id="mt_submit" name="Submit" value="Submit HIT" onclieck="onSubmit(this);" />'
 					//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 				+ '</form>'
 				+ '</td></tr></table>';
 			//console.log(html_submit_str);
 			$('#choice_region').append(html_submit_str);
-                
-			//var html_str2 = '<font size="4"><b>Scroll up to see the entire image</b></font>&#160;&#160;&#160;<font size="3">(Optional) Do you wish to provide any feedback on this HIT?</font><br /><textarea id="mt_comments_textbox" name="mt_comments_texbox" cols="94" nrows="5" />';
-
-			//$('#mt_feedback').append(html_str2);
+			/**
+			var html_str2 = '(Optional) Do you wish to provide any feedback on this HIT?</font><br /><textarea id="mt_comments_textbox" name="mt_comments_texbox" cols="70" nrows="5" />';
+			$('#mt_feedback').append(html_str2);
+         **/    
 
 		} else { // 404
 
@@ -360,6 +380,19 @@ function page(){
 	this.getURLValue = function (str) {
 		var idx = str.indexOf('=');
 		return str.substring(idx+1, str.length);
+	};
+	function getMaxCols(jsonObj, total_choice){
+
+		var max_col = 0;
+		for (i = 0; i < Math.min(n_choices, total_choice); i++) {
+
+			choice = jsonObj.choices[i];
+			segs = choice.split('->');	
+			if (segs.length > max_col) {
+				max_col = segs.length;
+			}
+		}	
+		return max_col;
 	};
 
     //gets available width (6.14.06)
