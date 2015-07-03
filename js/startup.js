@@ -160,26 +160,22 @@ function page(){
 
 			// render choices
 		 	var checkbox_str = '<table class="choiceTable">';
-			if (max_col > 1) {
-				checkbox_str += '<th class="firstCol"> Tags </th> <th>General Tags </th>'
-				for (i = 0; i < max_col - 2; ++i){
-					checkbox_str += '<th> </th>';
-				}
-			}else{
-				checkbox_str += '<th> Tags </th>'
-			}
 			for (i = 0; i < Math.min(n_choices, total_choice); i++)	{
 				
 				choice = jsonObj.choices[i];
 				segs = choice.split('->');	
-		
-				checkbox_str += '<tr>'	
+	
+				if ( i%2 == 0 ){	
+					checkbox_str += '<tr class = "even">'; 
+				}else{
+					checkbox_str += '<tr class = "odd">'; 
+				}
 				if (segs.length == 1) { 
 					
 					seg_id = i + '-' + segs[0];	
 					
 					choices_dict[seg_id] = false;
-					checkbox_str += '<td class="firstCol">';
+					checkbox_str += '<td>';
 					checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[0] + '<br>';
 					checkbox_str += '</td>';	
 
@@ -196,28 +192,28 @@ function page(){
 						}
 						//console.log(is_a_relation);
 						choices_dict[seg_id] = false;
-						if ( j == 0 ){
-							checkbox_str += '<td class = "firstCol">';
-						}else{
-							checkbox_str += '<td class = "otherCol">';
-						}
-							checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
+						checkbox_str += '<td>';
+						checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
 						checkbox_str += '</td>';	
 					}
 				}
 				// fill in some dummy cols
 				for ( j = 0; j < (max_col - segs.length); ++j ){
-						checkbox_str += '<td class="otherCol"></td>';	
+						checkbox_str += '<td></td>';	
 				}
 
 				checkbox_str += '</tr>'
 			}
 			// adding the none of the above option
 			choices_dict["none"] = false;
-			checkbox_str += '<tr>';
-			checkbox_str += '<td class="firstCol"><input type="checkbox" onclick="onCheck(this);"  name="none" value="none" id="none">None of the above <br></td>';
+			if (Math.min(n_choices, total_choice)%2 == 0) {
+				checkbox_str += '<tr class="even">';
+			}else{
+				checkbox_str += '<tr class="odd">';
+			}
+			checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="none" value="none" id="none">None of the above <br></td>';
 			for ( i = 0; i < (max_col - 1); ++i ){
-					checkbox_str += '<td class="otherCol"></td>';	
+					checkbox_str += '<td></td>';	
 			}
 			checkbox_str += '</tr>';
 			checkbox_str += '</table>';
