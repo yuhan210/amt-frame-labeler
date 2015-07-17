@@ -382,7 +382,9 @@ function page(){
 		}else{
 
 			// URL contains no parameters
-
+			// Populate an example task
+			this.frame_name = '13.jpg' 
+			this.video = 'thoroughbred_horse_through_googleglass_IbXdHo9CN1I'
 		}
 		return true;
 	};
