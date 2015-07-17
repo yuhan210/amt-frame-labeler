@@ -1,0 +1,7 @@
+The anno folder stores annotaions from turkers
+ - anno
+ |--- [video_name]
+ |--------------- [frame_id].json
+ |----------------[frame_id].json
+ |....
+
