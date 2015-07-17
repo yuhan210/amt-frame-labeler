@@ -18,5 +18,4 @@ basic: write_permissions
 write_permissions:
 	@echo "Setting write permissions";
 	$(shell chmod -R 777 ./annos)
-	$(shell chmod -R 777 ./answers)
 	$(shell chmod -R 777 ./icons)
