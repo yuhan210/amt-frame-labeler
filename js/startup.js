@@ -21,14 +21,39 @@ function StartAMT() {
 	console.timeEnd('startup');
 };
 
+function createJSONString(){
+	
+};
 function onSubmit(event){
-	alert(event);
-	alert(document.getElementById(select_value));
-	//console.log(selection_list);	
-     //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 
+	alert(selection_list.join());
+	
+		
+   if (window.XMLHttpRequest) {
+      var xml_http = new XMLHttpRequest();
+      xml_http.open("POST", 'php/postlabel.php', true);
+		xml_http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");	
+	
+			
+		xml_http.onreadystatechange = function() {//Call a function when the state changes.
+			//console.log(xml_http);
+			if(xml_http.readyState == 4 && xml_http.status == 200) {
+				console.log(xml_http.responseText);
+			}
+		}
+		var sd = '{"video": "asdf", "selection":"asdf"};{"video" : "123", "selection" : "asdf"} ';
+		
+      xml_http.send('json_str=' + sd);
+	} 
+   //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 
 };
+
+/**
+function getAnnoPath(){
+	return 'annos/' + this.video + '/' + this.frame_name.substr(0, this.frame_name.length-4) + '.json';
+}
+**/
 
 function onCheck(event){
 	select_value = event.value	
@@ -147,6 +172,7 @@ function page(){
 	this.image = null;
 	this.turkSubmitTo = null;
 
+
 	this.setChoicePos = function () {
 		var d = document.getElementById('choice_region');
 		d.style.float = "left";
@@ -238,9 +264,11 @@ function page(){
 				checkbox_str += '<tr class="odd">';
 			}
 			checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="_none" value="_none" id="_none">None of the above <br></td>';
+
 			for ( i = 0; i < (max_col - 1); ++i ){
 					checkbox_str += '<td></td>';	
 			}
+
 			checkbox_str += '</tr>';
 			checkbox_str += '</table>';
 			$('#choice_region').append(checkbox_str);
@@ -248,7 +276,8 @@ function page(){
 			// submit button
          var html_submit_str = '<table>'
 				+ '<tr><td>'
-       	   + '<form action="' + submitURL + '">'
+       	   //+ '<form action="' + submitURL + '">'
+       	   //+ '<form action="' + submitURL + '">'
 				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ this.assignmentId +'" />'
 				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ this.turkSubmitTo +'" />'
 				+ '<input type="hidden" id="hitId" name="hitId" value="'+ this.hitId +'" />'
@@ -258,7 +287,7 @@ function page(){
 				+ '<input type="hidden" id="video" name="video" value="' + this.video + '" />'
 				+ '<input type="hidden" id="frame_name" name="frame_name" value="' + this.frame_name + '" />'
 				+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
-				+ '<input disabled="true" type="submit" style="height:50px; width:300px" id="mt_submit" name="Submit" value="Submit HIT" onclieck="onSubmit(this);" />'
+				+ '<input disabled="true" type="submit" style="height:50px; width:300px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
 					//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 				+ '</form>'
 				+ '</td></tr></table>';
@@ -383,7 +412,7 @@ function page(){
 
 			// URL contains no parameters
 			// Populate an example task
-			this.frame_name = '13.jpg' 
+			this.frame_name = '9.jpg' 
 			this.video = 'thoroughbred_horse_through_googleglass_IbXdHo9CN1I'
 		}
 		return true;
