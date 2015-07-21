@@ -12,7 +12,6 @@ function StartAMT() {
 		setPageFormat();
 		loadImages();
 	   getLabels(page.video, page.frame_ids);
-		//renderLabels();
 
 	}else{
 		return;
@@ -23,15 +22,22 @@ function StartAMT() {
 
 // Using parameters in page var to set up the webpage format
 function setPageFormat(){
+
 	for (var i = 0; i < page.frame_names.length; i++){
 	
 		var frame_name = page.frame_names[i];
 		frame_name = frame_name.substring(0, frame_name.length-4);
-		$('#anno_region').append("<div id='" + frame_name + "-image'></div>");
-		$('#' + frame_name + "-image").css({'float':'left'});
-		$('#anno_region').append("<div id='" + frame_name + "-choice'></div>");
+		$('#anno_region').append("<div id='" + frame_name + "-region'>" +
+									 	 "<div id='" + frame_name + "-image'></div>" + 
+										 "<div id='" + frame_name + "-choice'></div>" +
+										 "<br style='clear: left;' />" +
+										 "<br> </br> " + 
+										 "</div>");
+			
+		$('#' + frame_name + "-region").width('100%');
 		$('#' + frame_name + "-choice").css({'float':'left'});
 	}
+
 };
 
 function loadImages(){
@@ -65,6 +71,7 @@ function loadFailure(frame_name) {
 
 };
 
+
 function renderImage(e, frame_name, i){
 	var image = e;
 	
@@ -84,6 +91,8 @@ function renderImage(e, frame_name, i){
 	var html_str =  '<img src="' + image.src + '" width="' + image.width + '" height="' + image.height +'"> </img>';
 	$('#' + div_id).append(html_str);
 	
+	$('#' + div_id).width(image.width).height(image.height);
+	$('#' + div_id).css({'float': 'left'});
 	// diable loading image effect.
 	document.getElementById('loading').style.visibility = 'hidden';
 	document.getElementById('loading').style.display = 'none';
@@ -91,12 +100,11 @@ function renderImage(e, frame_name, i){
 
 };
 
-
+// Send label request in one shot
 function getLabels(video_name, frame_ids){
 
 	var http_req;
    var params = 'video_name=' + video_name + '&frame_ids=' + frame_ids.join(';');
-	//console.log(params);
 
 	// branch for native XMLHttpRequest object
    if (window.XMLHttpRequest) {
@@ -108,18 +116,160 @@ function getLabels(video_name, frame_ids){
 			if(http_req.readyState == 4 && http_req.status == 200) {
 				// responseText contains the results from php
 				//console.log(http_req.responseText);
-				anno_segs = http_req.responseText.split(label_delimiter);
-				console.log(anno_segs);
+				label_segs = http_req.responseText.split(label_delimiter);
+				console.log(label_segs);
+
+				renderLabels(label_segs);
+
+			}else if (http_req.status == 404){ //404
+				alert('Error loading labels (does not exist?)');
 			}
-		}	
+		}
+	
       http_req.send();
 	}
 
 };
 
+function getMaxCols(jsonObj, total_choice){
+	
+	var max_col = 0;
+	for (i = 0; i < Math.min(n_choices, total_choice); i++) {
+
+		choice = jsonObj.choices[i];
+		segs = choice.split('->');	
+		if (segs.length > max_col) {
+			max_col = segs.length;
+		}
+	}	
+	return max_col;
+};
+
+
+function renderLabel(frame_id, json_obj){
+
+		var frame_choices = json_obj.choices;
+		var total_choice = Object.keys(frame_choices).length;
+		var max_col = getMaxCols(json_obj, total_choice);
+
+		// render choices
+	 	//var checkbox_str = '<table class="' + frame_id + '-choiceTable">';
+	 	var checkbox_str = '<table class="choiceTable">';
+		for (i = 0; i < Math.min(n_choices, total_choice); i++)	{
+				
+			choice = json_obj.choices[i];
+			segs = choice.split('->');	
+	
+			if ( i%2 == 0 ){	
+				checkbox_str += '<tr class = "even">'; 
+			}else{
+				checkbox_str += '<tr class = "odd">'; 
+			}
+			if (segs.length == 1) { 
+					
+				seg_id = i + '-' + segs[0];	
+					
+				choices_dict[seg_id] = false;
+				checkbox_str += '<td>';
+				checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[0] + '<br>';
+				checkbox_str += '</td>';	
+
+			}else{ //hierarchy
+					
+				for (j = 0 ; j < segs.length; ++j) {
+					
+					seg_id = i + '-' + segs[j];	
+					if (j != segs.length -1) {
+						is_a_relation[seg_id] = i + '-' + segs[j+1];
+					}
+					if (j != 0){
+						has_a_relation[seg_id] = i + '-' + segs[j-1];
+					}
+					//console.log(is_a_relation);
+					choices_dict[seg_id] = false;
+					checkbox_str += '<td>';
+					checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
+					checkbox_str += '</td>';	
+				}
+			}
+			// fill in some dummy cols
+			for ( j = 0; j < (max_col - segs.length); ++j ){
+					checkbox_str += '<td></td>';	
+			}
+				checkbox_str += '</tr>'
+		}
+
+		// adding the none of the above option
+		choices_dict["_none"] = false;
+		if (Math.min(n_choices, total_choice)%2 == 0) {
+			checkbox_str += '<tr class="even">';
+		}else{
+			checkbox_str += '<tr class="odd">';
+		}
+		checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="_none" value="_none" id="_none">None of the above <br></td>';
+			for ( i = 0; i < (max_col - 1); ++i ){
+				checkbox_str += '<td></td>';	
+			}
+
+		checkbox_str += '</tr>';
+		checkbox_str += '</table>';
+
+		$('#' + frame_id + '-choice').append(checkbox_str);
+
+};
+
+
+
+function renderLabels(label_segs){
+
+		for (var i = 0; i < label_segs.length; i++){
+			var json_str = label_segs[i];
+			var json_obj = JSON.parse(json_str);
+			var video_name = json_obj.video_name;
+			var frame_name = json_obj.frame_name;
+			var frame_id = frame_name.substring(0, frame_name.length-4);
+			
+			
+			// intro word
+	      var html_str = '<table>'
+					+ '<tr><td>'
+					+ '<tr><td> <font size="4"><b> Select all words that describe the contents in this image. </b></font> </tr></td>' 
+					+ '</td></tr></table>';
+			console.log(frame_id);
+			$('#' + frame_id + '-choice').append(html_str);
+			
+			// render choices for each image
+			renderLabel(frame_id, json_obj);
+		}
+			
+		// submit button
+      var html_submit_str = '<table>'
+				+ '<tr><td>'
+       	   //+ '<form action="' + submitURL + '">'
+       	   //+ '<form action="' + submitURL + '">'
+				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ this.assignmentId +'" />'
+				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ this.turkSubmitTo +'" />'
+				+ '<input type="hidden" id="hitId" name="hitId" value="'+ this.hitId +'" />'
+				+ '<input type="hidden" id="workerId" name="workerId" value="'+ this.workerId +'" />'
+				+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
+				+ '<input type="hidden" id="selections" name="selections" value="" />'
+				+ '<input type="hidden" id="video" name="video" value="' + this.video + '" />'
+				+ '<input type="hidden" id="frame_name" name="frame_name" value="' + this.frame_name + '" />'
+				+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
+				+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
+					//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
+				+ '</form>'
+				+ '</td></tr></table>';
+			//console.log(html_submit_str);
+		$('#anno_region').append(html_submit_str);
+
+}
+
+
 function getImagePath(frame_name){
 	return '../msr/' + page.video + '/' + frame_name;
 };
+
 
 function createJSONString(){
 	
@@ -150,11 +300,6 @@ function onSubmit(event){
 
 };
 
-/**
-function getAnnoPath(){
-	return 'annos/' + this.video + '/' + this.frame_name.substr(0, this.frame_name.length-4) + '.json';
-}
-**/
 
 function onCheck(event){
 	select_value = event.value	
