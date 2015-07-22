@@ -14,6 +14,7 @@ function StartAMT() {
 	   getLabels(page.video, page.frame_ids);
 
 	}else{
+		
 		return;
 	}	
 		
@@ -27,6 +28,8 @@ function setPageFormat(){
 	
 		var frame_name = page.frame_names[i];
 		frame_name = frame_name.substring(0, frame_name.length-4);
+
+		// Put image and choice side-by-side
 		$('#anno_region').append("<div id='" + frame_name + "-region'>" +
 									 	 "<div id='" + frame_name + "-image'></div>" + 
 										 "<div id='" + frame_name + "-choice'></div>" +
@@ -45,7 +48,8 @@ function loadImages(){
 
 	var frame_names = page.frame_names;
 	var imagesLoaded = 0;
-
+	
+	// Load multiple images
 	for (var i = 0; i < frame_names.length; i++){
 		var image = new Image();
 
@@ -76,7 +80,7 @@ function renderImage(e, frame_name, i){
 	
 	//console.log(e.width + ',' + frame_name + ',' + i);
 
-	// determine image size	
+	// Determine image size. Compare with global var fixed_im_width
 	var im_ratio = 1;
 	if (image.width > fixed_im_width){
 		im_ratio = fixed_im_width/image.width;
@@ -85,20 +89,20 @@ function renderImage(e, frame_name, i){
 	image.width = Math.round(im_ratio * image.width);
 	image.height = Math.round(im_ratio * image.height);
 
-	// render image
+	// Render image
 	var image_div = frame_name.substring(0, frame_name.length-4) + '-image';
 	var html_str =  '<img src="' + image.src + '" width="' + image.width + '" height="' + image.height +'"> </img>';
 	$('#' + image_div).append(html_str);
 	$('#' + image_div).width(image.width).height(image.height);
 
-	// diable loading image effect.
+	// Diable loading image effect. And show images
 	document.getElementById('loading').style.visibility = 'hidden';
 	document.getElementById('loading').style.display = 'none';
    document.getElementById('main_media').style.visibility = 'visible';
 
 };
 
-// Send label request in one shot
+// Send get label requests in one shot
 function getLabels(video_name, frame_ids){
 
 	var http_req;
@@ -109,9 +113,12 @@ function getLabels(video_name, frame_ids){
 
     	http_req = new XMLHttpRequest();
       http_req.open("GET", 'php/getlabels.php' + '?' + params , true);
-
+		
 		http_req.onreadystatechange = function() {//Call a function when the state changes.
+			
+			// 4 indicates done; 200 indicates success
 			if(http_req.readyState == 4 && http_req.status == 200) {
+
 				// responseText contains the results from php
 				//console.log(http_req.responseText);
 				label_segs = http_req.responseText.split(label_delimiter);
@@ -120,9 +127,10 @@ function getLabels(video_name, frame_ids){
 				renderLabels(label_segs);
 
 			}else if (http_req.status == 404){ //404
-				alert('Error loading labels (does not exist?)');
+				alert('Error loading labels (label does not exist on the server?)');
 			}
 		}
+
       http_req.send();
 	}
 
@@ -142,13 +150,13 @@ function getMaxCols(jsonObj, total_choice){
 	return max_col;
 };
 
-
 function renderLabel(frame_id, json_obj){
 
-
-		choices_dict[page.frameId_key[frame_id]] = {};
-		is_a_relation[page.frameId_key[frame_id]]	= {};
-		has_a_relation[page.frameId_key[frame_id]] = {};
+		var frame_key = page.frameId_key[frame_id];
+		choices_dict[frame_key] = {};
+		is_a_relation[frame_key] = {};
+		has_a_relation[frame_key] = {};
+		selection_list[frame_key] = [];
 
 		var frame_choices = json_obj.choices;
 		var total_choice = Object.keys(frame_choices).length;
@@ -171,7 +179,7 @@ function renderLabel(frame_id, json_obj){
 			if (segs.length == 1) { 
 					
 				seg_id = frame_id + '-' + i + '-' + segs[0];	
-				choices_dict[page.frameId_key[frame_id]][seg_id] = false;
+				choices_dict[frame_key][seg_id] = false;
 				
 				checkbox_str += '<td>';
 				checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[0] + '<br>';
@@ -183,13 +191,13 @@ function renderLabel(frame_id, json_obj){
 						
 					seg_id = frame_id + '-' + i + '-' + segs[j];
 					if (j != segs.length -1) {
-						is_a_relation[page.frameId_key[frame_id]][seg_id] = frame_id + '-' + i + '-' + segs[j+1];
+						is_a_relation[frame_key][seg_id] = frame_id + '-' + i + '-' + segs[j+1];
 					}
 					if (j != 0){
-						has_a_relation[page.frameId_key[frame_id]][seg_id] = frame_id + '-' + i + '-' + segs[j-1];
+						has_a_relation[frame_key][seg_id] = frame_id + '-' + i + '-' + segs[j-1];
 					}
 
-					choices_dict[page.frameId_key[frame_id]][seg_id] = false;
+					choices_dict[frame_key][seg_id] = false;
 					checkbox_str += '<td>';
 					checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
 					checkbox_str += '</td>';	
@@ -205,7 +213,7 @@ function renderLabel(frame_id, json_obj){
 
 		// adding the none of the above option
 		var none_id = frame_id + '-none';
-		choices_dict[page.frameId_key[frame_id]][none_id] = false;
+		choices_dict[frame_key][none_id] = false;
 
 		if ( Math.min(n_choices, total_choice) %2 == 0 ) {
 			checkbox_str += '<tr class="even">';
@@ -228,8 +236,7 @@ function renderLabel(frame_id, json_obj){
 
 
 function renderLabels(label_segs){
-
-		//choices_dict = []; // a list of dictionary
+		
 		for (var i = 0; i < label_segs.length; i++){
 			var json_str = label_segs[i];
 			var json_obj = JSON.parse(json_str);
@@ -240,20 +247,23 @@ function renderLabels(label_segs){
 			
 			// intro word
 	      var html_str = '<table>'
-					+ '<tr><td>'
-					+ '<tr><td> <font size="4"><b> Select all words that describe the contents in this image. </b></font> </tr></td>' 
-					+ '</td></tr></table>';
+							+ '<tr><td> <font size="4"><b> Select all words that describe the contents in this image. </b></font> </tr></td>' 
+							+ '</table>';
 
-			console.log(frame_id);
 			$('#' + frame_id + '-choice').append(html_str);
+
 			// render choices for each image
 			renderLabel(frame_id, json_obj);
 			
 		}
+
 		/** debugging **/
-		console.log('choice_dict:' + choices_dict);
-		console.log('is_a_relation:' + is_a_relation);
-		console.log('has_a_realtion:' + has_a_relation);
+		console.log('choice_dict:');
+		console.log(choices_dict);
+		console.log('is_a_relation:');
+		console.log(is_a_relation);
+		console.log('has_a_realtion:');
+		console.log( has_a_relation);
 		/** end of debugging **/
 
 		// render submit button
@@ -315,12 +325,11 @@ function onSubmit(event){
 
 function onCheck(event){
 	var select_value = event.value	
-	console.log(select_value);
 
 	var segs = select_value.split('-');
 	var frame_id = segs[0];
 	var frame_key = page.frameId_key[frame_id];
-	console.log('frame_id:' + frame_id + ' frame_key:' + frame_key);
+	//console.log('frame_id:' + frame_id + ' frame_key:' + frame_key);
 
 	if (event.checked) {
 
@@ -329,17 +338,19 @@ function onCheck(event){
 		choices_dict[frame_key][select_value] = true;
 		document.getElementById(select_value).checked = true;
 		
-		selection_list[selection_list.length] = select_value;
+		selection_list[frame_key][selection_list[frame_key].length] = select_value;	
 
 		// select all parents
-		while (select_value in is_a_relation) {
-					
-			select_value = is_a_relation[select_value];
-			p_idx = selection_list.indexOf(select_value);
-			if (p_idx >= 0) {
-				selection_list.splice(p_idx, 1);
+		while (select_value in is_a_relation[frame_key]) {
+			select_value = is_a_relation[frame_key][select_value];
+	
+			p_idx = selection_list[frame_key].indexOf(select_value);
+			if (p_idx >= 0) { // removing parents
+				selection_list[frame_key].splice(p_idx, 1);
 			}
-			choices_dict[frame_key][select_value]	= true;
+
+			choices_dict[frame_key][select_value] = true;
+			console.log(document.getElementById(select_value));
 			document.getElementById(select_value).checked = true;
 		}
 		
@@ -351,78 +362,102 @@ function onCheck(event){
 		document.getElementById(select_value).checked = false;
 		
 		// add parent
-		if (select_value in is_a_relation) {
-			selection_list[selection_list.length] = is_a_relation[select_value];	
+		if (select_value in is_a_relation[frame_key]) {
+			selection_list[frame_key][selection_list[frame_key].length] = is_a_relation[frame_key][select_value];	
 		}
 
 		// unselect itself		
-		m_idx = selection_list.indexOf(select_value);
+		m_idx = selection_list[frame_key].indexOf(select_value);
 		if (m_idx >= 0){
-			selection_list.splice(m_idx, 1);
+			selection_list[frame_key].splice(m_idx, 1);
 		}
 		// unselect all children
-		while (select_value in has_a_relation) {
-			select_value = has_a_relation[select_value];
-			c_idx = selection_list.indexOf(select_value);
+		while (select_value in has_a_relation[frame_key]) {
+			select_value = has_a_relation[frame_key][select_value];
+			c_idx = selection_list[frame_key].indexOf(select_value);
 			if (c_idx >= 0){
-				selection_list.splice(c_idx, 1);
+				selection_list[frame_key].splice(c_idx, 1);
 			}
 			choices_dict[frame_key][select_value] = false;
 			document.getElementById(select_value).checked = false;
 		}
 	}
-
-	if (select_value.indexOf("-none") >= 0 && event.checked) {
-		// disable all other labels
-		keys = Object.keys(choices_dict);
-		for (i = 0 ; i < keys.length; i++){
-			if (keys[i].indexOf('_none') < 0) {
-				document.getElementById(keys[i]).disabled = true;
-			}
-		}
-	} else if (select_value.indexOf("_none") >= 0 && event.checked == false ){
-		// enable all other labels
-		keys = Object.keys(choices_dict);
-		for (i = 0 ; i < keys.length; i++){
-			if (keys[i].indexOf('_none') < 0) {
-				document.getElementById(keys[i]).disabled = false;
-			}
-		}
-	}
-	//console.log(selection_list);	
-	// Set all the data structures
-	// if selected more 1 make submit visible	
-	n_checked = 0;	
-	n_checked_wtnone = 0;
-	keys = Object.keys(choices_dict);
-	for (i = 0 ; i < keys.length; i++){
-		if (choices_dict[keys[i]]) {
-			n_checked += 1;
-		}
-
-		if (keys[i].indexOf('_none') < 0 && choices_dict[keys[i]]) {
-	  		n_checked_wtnone += 1;
-		}
-	}
-
-	document.getElementById("n_selections").value = n_checked;	
-	if (n_checked > 0) {
-			document.getElementById("mt_submit").disabled = false;
-	}else {
-			document.getElementById("mt_submit").disabled = true;
-	}
+	console.log(selection_list);	
 	
-	if (n_checked_wtnone > 0) {
-			document.getElementById("_none").disabled = true;
-	} else{
-			document.getElementById("_none").disabled = false;
-	}
+	setSubmitButtonVisibility(choices_dict);
+	setNoneButtonVisibility(frame_id, frame_key, select_value, event.checked, choices_dict);
 
 	//console.log(selection_list);
 	document.getElementById("selections").value = selection_list.join();
 	
 };
 
+function setNoneButtonVisibility(frame_id, frame_key, select_value, is_checked, choices_dict){
+	
+	var keys = Object.keys(choices_dict[frame_key]);
+	// Set the visibility of labels other than none
+	if (select_value.indexOf("none") >= 0){
 
+		if (is_checked) {
 
+			// disable all other labels
+			for (var i = 0; i < keys.length; i++) { 
+				if (keys[i].indexOf("none") < 0) {
+					document.getElementById(keys[i]).disabled = true;
+				}
+			}		
+			
+		} else if (is_checked == false) {
+			// enable other labels	
+			// disable all other labels
+			for (var i = 0; i < keys.length; i++) { 
+				if (keys[i].indexOf("none") < 0) {
+					document.getElementById(keys[i]).disabled = false;
+				}
+			}
+		}	
+	}
+	// Only check a particular image	
+	// Set the visibility of none
+	// None is visible only when all the other labels are not selected
+	var n_checked_wtnone = 0;
+	for (var i = 0; i < keys.length; i++) {
+		console.log(keys[i])	;
+		if (keys[i].indexOf("none") < 0 && choices_dict[frame_key][keys[i]]) {
+			n_checked_wtnone += 1;
+			break;
+		}
+	}	
+	console.log(n_checked_wtnone);
+	if (n_checked_wtnone > 0) {
+		document.getElementById(frame_id + "-none").disabled = true;
+	} else{
+		document.getElementById(frame_id + "-none").disabled = false;
+	}
+	
+};
+
+function setSubmitButtonVisibility(choices_dict){
+	
+	var labeled_image_count = 0;
+	for (var i = 0; i < Object.keys(choices_dict).length; ++i) {
+		// for each image
+		var keys = Object.keys(choices_dict[i]);
+		for (var j = 0; j < keys.length; j++){
+			// check if any key has been selected
+			if (choices_dict[i][keys[j]]) {
+				labeled_image_count += 1;
+				break;
+			}
+		}
+	}			
+	//console.log("labeled_count:" + labeled_image_count);
+	// check if all the images have been labeled
+	if (labeled_image_count == Object.keys(choices_dict).length) {
+			document.getElementById("mt_submit").disabled = false;
+	}else{
+			document.getElementById("mt_submit").disabled = true;
+	}
+
+};
 

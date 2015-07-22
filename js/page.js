@@ -9,8 +9,8 @@ function page(){
 	this.frame_names = null;
 	this.image = null;
 	this.turkSubmitTo = null;
-	this.frame_ids = [];
-	this.frameId_key = {};
+	this.frame_ids = []; // image name without extension
+	this.frameId_key = {}; // key-value pair. key: frame_id, value: array index (0 ~ n_frames)
 
 	this.loadChoices = function () {
    	var anno_req;
