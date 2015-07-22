@@ -9,8 +9,8 @@ function page(){
 	this.frame_names = null;
 	this.image = null;
 	this.turkSubmitTo = null;
-	this.frame_ids = null;
-
+	this.frame_ids = [];
+	this.frameId_key = {};
 
 	this.loadChoices = function () {
    	var anno_req;
@@ -189,9 +189,12 @@ function page(){
 				if (par_field == 'frame_names') {
 					frames = par_value.split(';');	
 					this.frame_names = frames;
+
 					for (var i = 0; i < frames.length; i++){
 						this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
-					}	
+						this.frameId_key[this.frame_ids[i]] = i;
+					}
+	
 				}
 			
 				if (par_field == 'turkSubmitTo') {	
@@ -223,7 +226,13 @@ function page(){
 
 			// Use a default example
 			this.frame_names = ['9.jpg', '5.jpg', '14.jpg'];
-			this.frame_ids = ['9','5', '14'];
+			var frames = this.frame_names;
+			for (var i = 0; i < frames.length; i++){
+				this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
+				
+				this.frameId_key[this.frame_ids[i]] = i;
+			}
+			
 			this.video = 'thoroughbred_horse_through_googleglass_IbXdHo9CN1I';
 		}
 		return true;

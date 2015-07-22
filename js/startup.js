@@ -35,6 +35,7 @@ function setPageFormat(){
 										 "</div>");
 			
 		$('#' + frame_name + "-region").width('100%');
+		$('#' + frame_name + "-image").css({'float':'left'});
 		$('#' + frame_name + "-choice").css({'float':'left'});
 	}
 
@@ -66,16 +67,14 @@ function loadImages(){
 };
 
 function loadFailure(frame_name) {
-
 	console.log('loading image ' + page.video + '/' + frame_name + ' failed.');
-
 };
 
 
 function renderImage(e, frame_name, i){
 	var image = e;
 	
-	console.log(e.width + ',' + frame_name + ',' + i);
+	//console.log(e.width + ',' + frame_name + ',' + i);
 
 	// determine image size	
 	var im_ratio = 1;
@@ -87,12 +86,11 @@ function renderImage(e, frame_name, i){
 	image.height = Math.round(im_ratio * image.height);
 
 	// render image
-	var div_id = frame_name.substring(0, frame_name.length-4) + '-image';
+	var image_div = frame_name.substring(0, frame_name.length-4) + '-image';
 	var html_str =  '<img src="' + image.src + '" width="' + image.width + '" height="' + image.height +'"> </img>';
-	$('#' + div_id).append(html_str);
-	
-	$('#' + div_id).width(image.width).height(image.height);
-	$('#' + div_id).css({'float': 'left'});
+	$('#' + image_div).append(html_str);
+	$('#' + image_div).width(image.width).height(image.height);
+
 	// diable loading image effect.
 	document.getElementById('loading').style.visibility = 'hidden';
 	document.getElementById('loading').style.display = 'none';
@@ -125,7 +123,6 @@ function getLabels(video_name, frame_ids){
 				alert('Error loading labels (does not exist?)');
 			}
 		}
-	
       http_req.send();
 	}
 
@@ -148,28 +145,34 @@ function getMaxCols(jsonObj, total_choice){
 
 function renderLabel(frame_id, json_obj){
 
+
+		choices_dict[page.frameId_key[frame_id]] = {};
+		is_a_relation[page.frameId_key[frame_id]]	= {};
+		has_a_relation[page.frameId_key[frame_id]] = {};
+
 		var frame_choices = json_obj.choices;
 		var total_choice = Object.keys(frame_choices).length;
 		var max_col = getMaxCols(json_obj, total_choice);
-
+		
 		// render choices
-	 	//var checkbox_str = '<table class="' + frame_id + '-choiceTable">';
 	 	var checkbox_str = '<table class="choiceTable">';
-		for (i = 0; i < Math.min(n_choices, total_choice); i++)	{
-				
+		for (i = 0; i < Math.min(n_choices, total_choice); i++) { 
+
+			// plot each row
 			choice = json_obj.choices[i];
 			segs = choice.split('->');	
-	
+
 			if ( i%2 == 0 ){	
 				checkbox_str += '<tr class = "even">'; 
 			}else{
 				checkbox_str += '<tr class = "odd">'; 
 			}
+
 			if (segs.length == 1) { 
 					
-				seg_id = i + '-' + segs[0];	
-					
-				choices_dict[seg_id] = false;
+				seg_id = frame_id + '-' + i + '-' + segs[0];	
+				choices_dict[page.frameId_key[frame_id]][seg_id] = false;
+				
 				checkbox_str += '<td>';
 				checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[0] + '<br>';
 				checkbox_str += '</td>';	
@@ -177,51 +180,56 @@ function renderLabel(frame_id, json_obj){
 			}else{ //hierarchy
 					
 				for (j = 0 ; j < segs.length; ++j) {
-					
-					seg_id = i + '-' + segs[j];	
+						
+					seg_id = frame_id + '-' + i + '-' + segs[j];
 					if (j != segs.length -1) {
-						is_a_relation[seg_id] = i + '-' + segs[j+1];
+						is_a_relation[page.frameId_key[frame_id]][seg_id] = frame_id + '-' + i + '-' + segs[j+1];
 					}
 					if (j != 0){
-						has_a_relation[seg_id] = i + '-' + segs[j-1];
+						has_a_relation[page.frameId_key[frame_id]][seg_id] = frame_id + '-' + i + '-' + segs[j-1];
 					}
-					//console.log(is_a_relation);
-					choices_dict[seg_id] = false;
+
+					choices_dict[page.frameId_key[frame_id]][seg_id] = false;
 					checkbox_str += '<td>';
 					checkbox_str += '<input type="checkbox" onclick="onCheck(this);"' + ' name="' + seg_id + '" value="' + seg_id + '" id="' + seg_id + '">' + segs[j] + '<br>';
 					checkbox_str += '</td>';	
 				}
 			}
+			
 			// fill in some dummy cols
 			for ( j = 0; j < (max_col - segs.length); ++j ){
 					checkbox_str += '<td></td>';	
 			}
-				checkbox_str += '</tr>'
+			checkbox_str += '</tr>'
 		}
 
 		// adding the none of the above option
-		choices_dict["_none"] = false;
-		if (Math.min(n_choices, total_choice)%2 == 0) {
+		var none_id = frame_id + '-none';
+		choices_dict[page.frameId_key[frame_id]][none_id] = false;
+
+		if ( Math.min(n_choices, total_choice) %2 == 0 ) {
 			checkbox_str += '<tr class="even">';
 		}else{
 			checkbox_str += '<tr class="odd">';
 		}
-		checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="_none" value="_none" id="_none">None of the above <br></td>';
-			for ( i = 0; i < (max_col - 1); ++i ){
-				checkbox_str += '<td></td>';	
-			}
+
+		checkbox_str += '<td><input type="checkbox" onclick="onCheck(this);"  name="' + none_id + '" value="' + none_id + '" id="' + none_id + '">None of the above <br></td>';
+		
+		for ( i = 0; i < (max_col - 1); ++i ){
+			checkbox_str += '<td></td>';	
+		}
 
 		checkbox_str += '</tr>';
 		checkbox_str += '</table>';
 
 		$('#' + frame_id + '-choice').append(checkbox_str);
-
 };
 
 
 
 function renderLabels(label_segs){
 
+		//choices_dict = []; // a list of dictionary
 		for (var i = 0; i < label_segs.length; i++){
 			var json_str = label_segs[i];
 			var json_obj = JSON.parse(json_str);
@@ -235,17 +243,22 @@ function renderLabels(label_segs){
 					+ '<tr><td>'
 					+ '<tr><td> <font size="4"><b> Select all words that describe the contents in this image. </b></font> </tr></td>' 
 					+ '</td></tr></table>';
+
 			console.log(frame_id);
 			$('#' + frame_id + '-choice').append(html_str);
-			
 			// render choices for each image
 			renderLabel(frame_id, json_obj);
-		}
 			
-		// submit button
+		}
+		/** debugging **/
+		console.log('choice_dict:' + choices_dict);
+		console.log('is_a_relation:' + is_a_relation);
+		console.log('has_a_realtion:' + has_a_relation);
+		/** end of debugging **/
+
+		// render submit button
       var html_submit_str = '<table>'
 				+ '<tr><td>'
-       	   //+ '<form action="' + submitURL + '">'
        	   //+ '<form action="' + submitURL + '">'
 				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ this.assignmentId +'" />'
 				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ this.turkSubmitTo +'" />'
@@ -278,7 +291,6 @@ function createJSONString(){
 function onSubmit(event){
 
 	alert(selection_list.join());
-	
 		
    if (window.XMLHttpRequest) {
       var xml_http = new XMLHttpRequest();
@@ -302,14 +314,19 @@ function onSubmit(event){
 
 
 function onCheck(event){
-	select_value = event.value	
-	//console.log(select_value);
-	// 
+	var select_value = event.value	
+	console.log(select_value);
+
+	var segs = select_value.split('-');
+	var frame_id = segs[0];
+	var frame_key = page.frameId_key[frame_id];
+	console.log('frame_id:' + frame_id + ' frame_key:' + frame_key);
+
 	if (event.checked) {
 
 		/** for UI rendering **/	
 		// select itself
-		choices_dict[select_value]	= true;
+		choices_dict[frame_key][select_value] = true;
 		document.getElementById(select_value).checked = true;
 		
 		selection_list[selection_list.length] = select_value;
@@ -322,7 +339,7 @@ function onCheck(event){
 			if (p_idx >= 0) {
 				selection_list.splice(p_idx, 1);
 			}
-			choices_dict[select_value]	= true;
+			choices_dict[frame_key][select_value]	= true;
 			document.getElementById(select_value).checked = true;
 		}
 		
@@ -330,7 +347,7 @@ function onCheck(event){
 	} else {
 		
 		// unselect itself		
-		choices_dict[select_value]	= false;
+		choices_dict[frame_key][select_value]	= false;
 		document.getElementById(select_value).checked = false;
 		
 		// add parent
@@ -350,12 +367,12 @@ function onCheck(event){
 			if (c_idx >= 0){
 				selection_list.splice(c_idx, 1);
 			}
-			choices_dict[select_value] = false;
+			choices_dict[frame_key][select_value] = false;
 			document.getElementById(select_value).checked = false;
 		}
 	}
 
-	if (select_value.indexOf("_none") >= 0 && event.checked) {
+	if (select_value.indexOf("-none") >= 0 && event.checked) {
 		// disable all other labels
 		keys = Object.keys(choices_dict);
 		for (i = 0 ; i < keys.length; i++){
@@ -371,7 +388,6 @@ function onCheck(event){
 				document.getElementById(keys[i]).disabled = false;
 			}
 		}
-	
 	}
 	//console.log(selection_list);	
 	// Set all the data structures
