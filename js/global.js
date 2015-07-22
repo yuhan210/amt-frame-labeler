@@ -6,7 +6,7 @@ var n_choices = 15;
 
 var fixed_im_width = 580;
 
-var choices_dict = null; // flat choices
+var choices_dict = []; // flat choices
 
 var is_a_relation = {};
 var has_a_relation = {};
