@@ -10,7 +10,7 @@ function page(){
 	this.image = null;
 	this.turkSubmitTo = null;
 	this.frame_ids = []; // image name without extension
-	this.frameId_key = {}; // key-value pair. key: frame_id, value: array index (0 ~ n_frames)
+	this.frameId_key = {}; // key-value pair. key: frame_id, value: (frame_key) array index (0 ~ n_frames)
 
 
 	this.ParseURL = function () {
@@ -88,10 +88,8 @@ function page(){
 			var frames = this.frame_names;
 			for (var i = 0; i < frames.length; i++){
 				this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
-				
 				this.frameId_key[this.frame_ids[i]] = i;
 			}
-			
 			this.video = 'thoroughbred_horse_through_googleglass_IbXdHo9CN1I';
 		}
 		return true;

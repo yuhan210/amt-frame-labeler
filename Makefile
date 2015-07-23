@@ -19,3 +19,4 @@ write_permissions:
 	@echo "Setting write permissions";
 	$(shell chmod -R 777 ./annos)
 	$(shell chmod -R 777 ./icons)
+	$(shell chmod -R 777 ./labels)

@@ -244,11 +244,11 @@ function renderLabels(label_segs){
 			var frame_name = json_obj.frame_name;
 			var frame_id = frame_name.substring(0, frame_name.length-4);
 			
-			
 			// intro word
 	      var html_str = '<table>'
-							+ '<tr><td> <font size="4"><b> Select all words that describe the contents in this image. </b></font> </tr></td>' 
-							+ '</table>';
+			+ '<tr><td>'
+			+ '<font size="4"><b> Select all words that describe the contents in this image. </b></font>'         + '</tr></td>' 
+			+ '</table>';
 
 			$('#' + frame_id + '-choice').append(html_str);
 
@@ -257,14 +257,14 @@ function renderLabels(label_segs){
 			
 		}
 
-		/** debugging **/
+		/** debugging 
 		console.log('choice_dict:');
 		console.log(choices_dict);
 		console.log('is_a_relation:');
 		console.log(is_a_relation);
 		console.log('has_a_realtion:');
 		console.log( has_a_relation);
-		/** end of debugging **/
+		 end of debugging **/
 
 		// render submit button
       var html_submit_str = '<table>'
@@ -293,20 +293,74 @@ function getImagePath(frame_name){
 	return '../msr/' + page.video + '/' + frame_name;
 };
 
+// For all images
+function createJSONString(video_name, frame_names, frameId_key, selection_list, is_a_relation){
 
-function createJSONString(){
-	
+
+	//console.log(Object.keys(selection_list));
+	var output_json_str = '';	
+	for (var i = 0; i < frame_names.length; i++) { 
+
+		var frame_name = frame_names[i];
+		var frame_id = frame_name.substring(0, frame_name.length-4);
+		var frame_key = frameId_key[frame_id];
+
+		var image_str = '{"gt_labels": ';	
+		var label_str = '[';
+		for (var j = 0; j < selection_list[frame_key].length; ++j){
+			
+			var select_value = selection_list[frame_key][j];
+			
+			var element_str = '[';
+			element_str += '"' + select_value + '"';
+			while (select_value in is_a_relation[frame_key]) {
+				select_value = is_a_relation[frame_key][select_value];
+				element_str += ', "' + select_value + '"';
+			}
+			element_str += ']';
+			
+			if (j == 0) {
+				label_str += element_str; 
+			}else {
+				label_str += ', ' + element_str;
+			}
+		}
+		label_str += ']';
+		image_str += label_str;
+
+		//adding frame_name
+		image_str += ', "frame_name": "' + frame_name + '"';
+		//adding video_name
+		image_str += ', "video_name": "' + video_name + '"';
+		image_str += '}';
+		
+		if (i == 0) {
+			output_json_str += image_str;
+		} else{
+			output_json_str += ';' + image_str;
+		
+		}
+	}
+	return output_json_str; 
+		
 };
 
+// Processing the selection_list and choices_dict
+// Post all labels in one shot
 function onSubmit(event){
+	
+	//console.log(selection_list);
+	//console.log(choices_dict);
+	//alert(selection_list);
 
-	alert(selection_list.join());
+	// creating the posting json string for all images	
+	var json_str = createJSONString(page.video, page.frame_names, page.frameId_key, selection_list, is_a_relation);
+	console.log(json_str);
 		
    if (window.XMLHttpRequest) {
       var xml_http = new XMLHttpRequest();
-      xml_http.open("POST", 'php/postlabel.php', true);
+      xml_http.open("POST", 'php/postlabels.php', true);
 		xml_http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");	
-	
 			
 		xml_http.onreadystatechange = function() {//Call a function when the state changes.
 			//console.log(xml_http);
@@ -314,9 +368,8 @@ function onSubmit(event){
 				console.log(xml_http.responseText);
 			}
 		}
-		var sd = '{"video": "asdf", "selection":"asdf"};{"video" : "123", "selection" : "asdf"} ';
 		
-      xml_http.send('json_str=' + sd);
+      xml_http.send('json_str=' + json_str);
 	} 
    //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 
@@ -331,6 +384,7 @@ function onCheck(event){
 	var frame_key = page.frameId_key[frame_id];
 	//console.log('frame_id:' + frame_id + ' frame_key:' + frame_key);
 
+	// Set up selection_list and choices_dict vars
 	if (event.checked) {
 
 		/** for UI rendering **/	
@@ -350,7 +404,6 @@ function onCheck(event){
 			}
 
 			choices_dict[frame_key][select_value] = true;
-			console.log(document.getElementById(select_value));
 			document.getElementById(select_value).checked = true;
 		}
 		
@@ -382,7 +435,7 @@ function onCheck(event){
 			document.getElementById(select_value).checked = false;
 		}
 	}
-	console.log(selection_list);	
+	//console.log(selection_list);	
 	
 	setSubmitButtonVisibility(choices_dict);
 	setNoneButtonVisibility(frame_id, frame_key, select_value, event.checked, choices_dict);
@@ -417,18 +470,17 @@ function setNoneButtonVisibility(frame_id, frame_key, select_value, is_checked, 
 			}
 		}	
 	}
+
 	// Only check a particular image	
 	// Set the visibility of none
 	// None is visible only when all the other labels are not selected
 	var n_checked_wtnone = 0;
 	for (var i = 0; i < keys.length; i++) {
-		console.log(keys[i])	;
 		if (keys[i].indexOf("none") < 0 && choices_dict[frame_key][keys[i]]) {
 			n_checked_wtnone += 1;
 			break;
 		}
 	}	
-	console.log(n_checked_wtnone);
 	if (n_checked_wtnone > 0) {
 		document.getElementById(frame_id + "-none").disabled = true;
 	} else{
