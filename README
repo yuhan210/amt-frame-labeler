@@ -1,7 +1,7 @@
-# ./annos stores the selection choices
+# ./annos stores the sugggested labels
    each video has a folder and each frame has a json file
 
-# ./answer stores the answers from turkers
+# ./labels stores the answers from turkers
    each video has a folder and each frame has a json file
 	
 
