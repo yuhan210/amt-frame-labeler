@@ -267,9 +267,10 @@ function renderLabels(label_segs){
 		 end of debugging **/
 
 		// render submit button
+		console.log(page.frame_names.join(';'));
       var html_submit_str = '<table>'
 				+ '<tr><td>'
-       	   //+ '<form action="' + submitURL + '">'
+       	   + '<form action="' + submitURL + '">'
 				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ page.assignmentId +'" />'
 				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ page.turkSubmitTo +'" />'
 				+ '<input type="hidden" id="hitId" name="hitId" value="'+ page.hitId +'" />'
@@ -277,14 +278,14 @@ function renderLabels(label_segs){
 				+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
 				+ '<input type="hidden" id="selections" name="selections" value="" />'
 				+ '<input type="hidden" id="video" name="video" value="' + page.video + '" />'
-				+ '<input type="hidden" id="frame_name" name="frame_name" value="' + page.frame_names.join(';') + '" />'
+				+ '<input type="hidden" id="frame_names" name="frame_names" value="' + page.frame_names.join(';') + '" />'
 				+ '<input type="hidden" id="post_json_str" name="post_json_str" value="" />'
 				+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
 				+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
 					//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 				+ '</form>'
 				+ '</td></tr></table>';
-			//console.log(html_submit_str);
+			console.log(html_submit_str);
 		$('#anno_region').append(html_submit_str);
 
 }
@@ -372,6 +373,27 @@ function onSubmit(event){
 		
       xml_http.send('json_str=' + json_str);
 	} 
+
+	// Set up entries submitted to amazon
+	var selection_counts = [];
+	var selection_str = '';
+	for (var i = 0; i < Object.keys(selection_list).length; ++i) {
+		
+		if (i == 0){
+			selection_str += selection_list[i].join(',');
+		} else {
+			selection_str += ';' + selection_list[i].join(',');
+		}
+
+		// for each image
+		var keys = Object.keys(selection_list[i]);
+		selection_counts[i] = keys.length;
+	}
+	//console.log('n_selections:' + selection_counts.join(';'));
+	//console.log('selections:' + selection_str);
+	$('#n_selections').val(selection_counts.join(';'));
+	$('#selections').val(selection_str);
+	$('#post_json_str').val(json_str);
    //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 
 };
