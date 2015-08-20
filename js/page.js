@@ -11,7 +11,7 @@ function page(){
 	this.turkSubmitTo = null;
 	this.frame_ids = []; // image name without extension
 	this.frameId_key = {}; // key-value pair. key: frame_id, value: (frame_key) array index (0 ~ n_frames)
-
+	this.mode = 'amt'; // amt: turker, check: check labels from turker, label:my label mode
 
 	this.ParseURL = function () {
 		var url = document.URL;
@@ -53,7 +53,6 @@ function page(){
 						this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
 						this.frameId_key[this.frame_ids[i]] = i;
 					}
-	
 				}
 			
 				if (par_field == 'turkSubmitTo') {	
@@ -64,7 +63,58 @@ function page(){
 					}
 					this.turkSubmitTo = par_value;
 				}
+		
+				// My special mode
+				if (par_field == 'mode') {
+					
+					if (par_value.indexOf('check') >= 0) { //mode=check_1
+						// Check labels from turkers	
 
+						this.mode = par_value;
+					  	var segs = par_value.split('_');
+						var vid = segs[1];
+						var responseText = this.getLabeledVideo(vid);
+						//console.log(responseText);
+
+						// no labeled videos
+						if (responseText.indexOf('null') >= 0) {
+							document.getElementById('loading').innerHTML = 'no labeled videos';
+							return false;
+						}
+
+						var video_segs = responseText.split(':');
+						this.video = video_segs[0];
+						this.frame_names = video_segs[1].split(',');
+						var frames = this.frame_names;
+
+						for (var i = 0; i < frames.length; i++){
+							this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
+							this.frameId_key[this.frame_ids[i]] = i;
+						}
+
+					}else if (par_value.indexOf('label') >= 0) { //mode=label_1
+						
+						// Start one page labeling	
+						this.mode = par_value;
+						var segs = par_value.split('_');
+						var vid = segs[1];
+						var responseText = this.getUnlabeledVideo(vid);
+						//console.log(responseText);
+						
+						var video_segs = responseText.split(':');
+						this.video = video_segs[0];
+						this.frame_names = video_segs[1].split(',');
+						//console.log(this.frame_names)
+						var frames = this.frame_names;
+
+						for (var i = 0; i < frames.length; i++){
+							this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
+							this.frameId_key[this.frame_ids[i]] = i;
+						}				
+					}
+					
+				}		
+				
 				//console.log('field: ' + par_field + ' value:' + par_value);
 				
 				par_str = par_str.substring(idx+1, par_str.length);
@@ -83,19 +133,51 @@ function page(){
 
 		}else{ // URL contains no parameters
 
+				
+			// Load all frames
 			// Use a default example
-			this.frame_names = ['9.jpg', '5.jpg', '14.jpg'];
+			this.frame_names = ['0.jpg', '60.jpg', '2128.jpg'];
 			var frames = this.frame_names;
 			for (var i = 0; i < frames.length; i++){
 				this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
 				this.frameId_key[this.frame_ids[i]] = i;
 			}
-			this.video = 'thoroughbred_horse_through_googleglass_IbXdHo9CN1I';
+			this.video = '100_mile_wilderness_sled_dog_race_Qv4I_MDX7ws';
 		}
 		return true;
 	};
 
+	this.getUnlabeledVideo = function(vid) {
+		var http_req;
+		var params = 'vid=' + vid;
+		// branch for native XMLHttpRequest object
+   	if (window.XMLHttpRequest) {
+
+    		http_req = new XMLHttpRequest();
+	      http_req.open("GET", 'php/getUnlabeledVideo.php' + '?' + params , false);
 	
+      	http_req.send();
+		}
+
+		return http_req.responseText; 
+	};
+	
+	this.getLabeledVideo = function(vid){
+		var http_req;
+	   var params = 'vid=' + vid;
+
+		// branch for native XMLHttpRequest object
+   	if (window.XMLHttpRequest) {
+
+    		http_req = new XMLHttpRequest();
+	      http_req.open("GET", 'php/getLabeledVideo.php' + '?' + params , false);
+	
+      	http_req.send();
+		}
+
+		return http_req.responseText; 
+	};
+
 
 	// *****************
    // private methods:
