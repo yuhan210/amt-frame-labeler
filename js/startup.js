@@ -472,6 +472,13 @@ function onSubmit(event){
 			//console.log(xml_http);
 			if(xml_http.readyState == 4 && xml_http.status == 200) {
 				console.log(xml_http.responseText);
+				if (page.mode != 'amt') {
+					// direct page
+					// to next page
+					var segs = page.mode.split('_');
+					var vid = parseInt(segs[1]) + 1;
+					window.location = 'https://elmo.csail.mit.edu/amt/index.html?mode=' + segs[0] + '_' + vid.toString();
+				}
 			}
 		}
 		
@@ -499,13 +506,6 @@ function onSubmit(event){
 	$('#selections').val(selection_str);
 	$('#post_json_str').val(json_str);
    //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
-	if (page.mode != 'amt') {
-		// direct page
-		// to next page
-		var segs = page.mode.split('_');
-		var vid = parseInt(segs[1]) + 1;
-		window.location = 'https://elmo.csail.mit.edu/amt/index.html?mode=' + segs[0] + '_' + vid.toString();
-	}
 
 };
 
