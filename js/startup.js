@@ -102,6 +102,86 @@ function renderImage(e, frame_name, i){
 
 };
 
+// Get all the user labels (of a video) from server 
+function getUserLabels(video_name) {
+	var http_req;
+	var params = 'video_name=' + video_name;
+
+	// branch for native XMLHttpRequest object
+   if (window.XMLHttpRequest) {
+
+    	http_req = new XMLHttpRequest();
+      http_req.open("GET", 'php/getUserLabels.php' + '?' + params , false);
+		
+		http_req.onreadystatechange = function() {//Call a function when the state changes.
+			
+			// 4 indicates done; 200 indicates success
+			if(http_req.readyState == 4 && http_req.status == 200) {
+
+				// responseText contains the results from php
+				//console.log(http_req.responseText);
+				var label_segs = http_req.responseText.split(label_delimiter);
+
+				showUserLabels(label_segs);
+
+			}else if (http_req.status == 404){ //404
+				alert('Error loading labels (label does not exist on the server?)');
+			}
+		}
+
+      http_req.send();
+	}	
+}
+
+// switch some of the labels on/off based on the user labels
+// setup the data structure
+function showUserLabels(label_segs) {
+
+	//console.log(label_segs);
+	for (var i = 0; i < label_segs.length; i++){
+		var json_str = label_segs[i];
+		var json_obj = JSON.parse(json_str);
+		var video_name = json_obj.video_name;
+		var frame_name = json_obj.frame_name;
+		var gt_labels = json_obj.gt_labels;
+
+		for (var j = 0; j < gt_labels.length; j++){
+			selectLabel(gt_labels[j][0]);
+		}
+	}
+}
+
+function selectLabel(select_value){
+
+	var segs = select_value.split('-');
+	var frame_id = segs[0];
+	var frame_key = page.frameId_key[frame_id];
+
+	/** for UI rendering **/	
+	// select itself
+	choices_dict[frame_key][select_value] = true;
+	document.getElementById(select_value).checked = true;
+		
+	selection_list[frame_key][selection_list[frame_key].length] = select_value;	
+
+	// select all parents
+	while (select_value in is_a_relation[frame_key]) {
+		select_value = is_a_relation[frame_key][select_value];
+		p_idx = selection_list[frame_key].indexOf(select_value);
+		if (p_idx >= 0) { // removing parents
+			selection_list[frame_key].splice(p_idx, 1);
+		}
+		choices_dict[frame_key][select_value] = true;
+		document.getElementById(select_value).checked = true;
+	}
+	setSubmitButtonVisibility(choices_dict);
+	setNoneButtonVisibility(frame_id, frame_key, select_value, true, choices_dict);
+
+	//console.log(selection_list);
+	document.getElementById("selections").value = selection_list.join();
+
+}
+
 // Send get label requests in one shot
 function getLabels(video_name, frame_ids){
 
@@ -122,9 +202,15 @@ function getLabels(video_name, frame_ids){
 				// responseText contains the results from php
 				//console.log(http_req.responseText);
 				label_segs = http_req.responseText.split(label_delimiter);
-				console.log(label_segs);
-
+				//console.log(label_segs);
 				renderLabels(label_segs);
+		
+				// Render user labels		
+				if (page.mode.indexOf('check') >= 0){
+					getUserLabels(page.video);
+				}
+
+				
 
 			}else if (http_req.status == 404){ //404
 				alert('Error loading labels (label does not exist on the server?)');
@@ -234,7 +320,6 @@ function renderLabel(frame_id, json_obj){
 };
 
 
-
 function renderLabels(label_segs){
 		
 		for (var i = 0; i < label_segs.length; i++){
@@ -247,7 +332,8 @@ function renderLabels(label_segs){
 			// intro word
 	      var html_str = '<table>'
 			+ '<tr><td>'
-			+ '<font size="4"><b> Select all words that describe the contents in this image. </b></font>'         + '</tr></td>' 
+			+ '<font size="4"><b> Select all words that describe the contents in this image. </b></font>'         
+		   + '</tr></td>' 
 			+ '</table>';
 
 			$('#' + frame_id + '-choice').append(html_str);
@@ -264,35 +350,49 @@ function renderLabels(label_segs){
 		console.log(is_a_relation);
 		console.log('has_a_realtion:');
 		console.log( has_a_relation);
-		 end of debugging **/
+		end of debugging **/
 
 		// render submit button
-		console.log(page.frame_names.join(';'));
-      var html_submit_str = '<table>'
-				+ '<tr><td>'
-       	   + '<form action="' + submitURL + '">'
-				+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ page.assignmentId +'" />'
-				+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ page.turkSubmitTo +'" />'
-				+ '<input type="hidden" id="hitId" name="hitId" value="'+ page.hitId +'" />'
-				+ '<input type="hidden" id="workerId" name="workerId" value="'+ page.workerId +'" />'
-				+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
-				+ '<input type="hidden" id="selections" name="selections" value="" />'
-				+ '<input type="hidden" id="video" name="video" value="' + page.video + '" />'
-				+ '<input type="hidden" id="frame_names" name="frame_names" value="' + page.frame_names.join(';') + '" />'
-				+ '<input type="hidden" id="post_json_str" name="post_json_str" value="" />'
-				+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
-				+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
-					//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
-				+ '</form>'
-				+ '</td></tr></table>';
-			console.log(html_submit_str);
+		//console.log(page.frame_names.join(';'));
+		var html_submit_str = '';
+		if (page.mode == 'amt') {
+	      html_submit_str = '<table>'
+					+ '<tr><td>'
+      	 	   + '<form action="' + submitURL + '">'
+					+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ page.assignmentId +'" />'
+					+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ page.turkSubmitTo +'" />'
+					+ '<input type="hidden" id="hitId" name="hitId" value="'+ page.hitId +'" />'
+					+ '<input type="hidden" id="workerId" name="workerId" value="'+ page.workerId +'" />'
+					+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
+					+ '<input type="hidden" id="selections" name="selections" value="" />'
+					+ '<input type="hidden" id="video" name="video" value="' + page.video + '" />'
+					+ '<input type="hidden" id="frame_names" name="frame_names" value="' + page.frame_names.join(';') + '" />'
+					+ '<input type="hidden" id="post_json_str" name="post_json_str" value="" />'
+					+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
+					+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
+						//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
+					+ '</form>'
+					+ '</td></tr></table>';
+				console.log(html_submit_str);
+
+		}else{
+
+	      html_submit_str = '<table>'
+					+ '<tr><td>'
+					+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
+					+ '<input type="hidden" id="selections" name="selections" value="" />'
+					+ '<input type="hidden" id="video" name="video" value="' + page.video + '" />'
+					+ '<input type="hidden" id="frame_names" name="frame_names" value="' + page.frame_names.join(';') + '" />'
+					+ '<input type="hidden" id="post_json_str" name="post_json_str" value="" />'
+					+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
+		}	
 		$('#anno_region').append(html_submit_str);
 
 }
 
 
 function getImagePath(frame_name){
-	return '../msr/' + page.video + '/' + frame_name;
+	return './images/' + page.video + '/' + frame_name;
 };
 
 // For all images
@@ -395,11 +495,19 @@ function onSubmit(event){
 	$('#selections').val(selection_str);
 	$('#post_json_str').val(json_str);
    //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
+	if (page.mode != 'amt') {
+		// direct page
+		// to next page
+		var segs = page.mode.split('_');
+		var vid = segs[1] + 1;
+		window.location = 'https://elmo.csail.mit.edu/amt/index.html?mode=' + segs[0] + '_' + vid;
+	}
 
 };
 
 
 function onCheck(event){
+	console.log(event.value);
 	var select_value = event.value	
 
 	var segs = select_value.split('-');
