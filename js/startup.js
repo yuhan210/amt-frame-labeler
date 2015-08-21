@@ -31,6 +31,7 @@ function setPageFormat(){
 
 		// Put image and choice side-by-side
 		$('#anno_region').append("<div id='" + frame_name + "-region'>" +
+										 "<div id='" + frame_name + "-loading'>Loading image...</div>" +
 									 	 "<div id='" + frame_name + "-image'></div>" + 
 										 "<div id='" + frame_name + "-choice'></div>" +
 										 "<br style='clear: left;' />" +
@@ -38,6 +39,7 @@ function setPageFormat(){
 										 "</div>");
 			
 		$('#' + frame_name + "-region").width('100%');
+		$('#' + frame_name + "-loading").css({'float':'left'});
 		$('#' + frame_name + "-image").css({'float':'left'});
 		$('#' + frame_name + "-choice").css({'float':'left'});
 	}
@@ -96,8 +98,9 @@ function renderImage(e, frame_name, i){
 	$('#' + image_div).width(image.width).height(image.height);
 
 	// Diable loading image effect. And show images
-	document.getElementById('loading').style.visibility = 'hidden';
-	document.getElementById('loading').style.display = 'none';
+	var load_div = frame_name.substring(0, frame_name.length-4) + '-loading';
+	document.getElementById(load_div).style.visibility = 'hidden';
+	document.getElementById(load_div).style.display = 'none';
    document.getElementById('main_media').style.visibility = 'visible';
 
 };
@@ -499,8 +502,8 @@ function onSubmit(event){
 		// direct page
 		// to next page
 		var segs = page.mode.split('_');
-		var vid = segs[1] + 1;
-		window.location = 'https://elmo.csail.mit.edu/amt/index.html?mode=' + segs[0] + '_' + vid;
+		var vid = parseInt(segs[1]) + 1;
+		window.location = 'https://elmo.csail.mit.edu/amt/index.html?mode=' + segs[0] + '_' + vid.toString();
 	}
 
 };
