@@ -377,7 +377,7 @@ function renderLabels(label_segs){
 						//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 					+ '</form>'
 					+ '</td></tr></table>';
-				console.log(html_submit_str);
+				//console.log(html_submit_str);
 
 		}else{
 
