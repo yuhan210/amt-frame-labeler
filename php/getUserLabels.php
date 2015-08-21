@@ -1,7 +1,7 @@
 <?php
 
-//$video_name = $_GET['video_name'];
-$video_name =  '100_mile_wilderness_sled_dog_race_Qv4I_MDX7ws';
+$video_name = $_GET['video_name'];
+//$video_name =  '100_mile_wilderness_sled_dog_race_Qv4I_MDX7ws';
 $files = scandir('../labels/'.$video_name);
 $n_files = count($files);
 
