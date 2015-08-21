@@ -137,7 +137,7 @@ function getUserLabels(video_name) {
 }
 
 // switch some of the labels on/off based on the user labels
-// setup the data structure
+// setup the data structure (replay user selections)
 function showUserLabels(label_segs) {
 
 	//console.log(label_segs);
@@ -211,6 +211,7 @@ function getLabels(video_name, frame_ids){
 				// Render user labels		
 				if (page.mode.indexOf('check') >= 0){
 					getUserLabels(page.video);
+					console.log('Finish loading user labels!');
 				}
 
 				

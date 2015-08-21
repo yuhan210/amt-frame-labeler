@@ -48,7 +48,7 @@ function page(){
 				if (par_field == 'frame_names') {
 					frames = par_value.split(';');	
 					this.frame_names = frames;
-
+					console.log(this.frame_names);
 					for (var i = 0; i < frames.length; i++){
 						this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
 						this.frameId_key[this.frame_ids[i]] = i;
@@ -75,7 +75,7 @@ function page(){
 						var vid = segs[1];
 						var responseText = this.getLabeledVideo(vid);
 						//console.log(responseText);
-
+						
 						// no labeled videos
 						if (responseText.indexOf('null') >= 0) {
 							document.getElementById('loading').innerHTML = 'no labeled videos';
@@ -115,7 +115,7 @@ function page(){
 					
 				}		
 				
-				//console.log('field: ' + par_field + ' value:' + par_value);
+				console.log('field: ' + par_field + ' value:' + par_value);
 				
 				par_str = par_str.substring(idx+1, par_str.length);
 
@@ -125,8 +125,8 @@ function page(){
 			/** handle conditions **/
 			if (this.assignmentId == 'ASSIGNMENT_ID_NOT_AVAILABLE'){
 
-				document.getElementById('loading').style.visibility = 'hidden';
-				document.getElementById('loading').style.display = 'none';
+				//document.getElementById('loading').style.visibility = 'hidden';
+				//document.getElementById('loading').style.display = 'none';
 				window.location = "https://elmo.csail.mit.edu/amt/instruction.html";
 				return false;	
 			}
