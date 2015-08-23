@@ -181,7 +181,7 @@ function selectLabel(select_value){
 	setNoneButtonVisibility(frame_id, frame_key, select_value, true, choices_dict);
 
 	//console.log(selection_list);
-	document.getElementById("selections").value = selection_list.join();
+	//document.getElementById("selections").value = selection_list.join();
 
 }
 
@@ -462,7 +462,29 @@ function onSubmit(event){
 	// creating the posting json string for all images	
 	var json_str = createJSONString(page.video, page.frame_names, page.frameId_key, selection_list, is_a_relation);
 	//console.log(json_str);
+	
+	// Set up entries submitted to amazon
+	var selection_counts = [];
+	var selection_str = '';
+	for (var i = 0; i < Object.keys(selection_list).length; ++i) {
 		
+		if (i == 0){
+			selection_str += selection_list[i].join(',');
+		} else {
+			selection_str += ';' + selection_list[i].join(',');
+		}
+
+		// for each image
+		var keys = Object.keys(selection_list[i]);
+		selection_counts[i] = keys.length;
+	}
+	//console.log('n_selections:' + selection_counts.join(';'));
+	//console.log('selections:' + selection_str);
+	$('#n_selections').val(selection_counts.join(';'));
+	$('#selections').val(selection_str);
+	$('#post_json_str').val(json_str);
+
+	// Send results back to the server then submit form	
    if (window.XMLHttpRequest) {
       var xml_http = new XMLHttpRequest();
       xml_http.open("POST", 'php/postlabels.php', true);
@@ -492,27 +514,6 @@ function onSubmit(event){
       xml_http.send('json_str=' + json_str);
 	} 
 
-	// Set up entries submitted to amazon
-	var selection_counts = [];
-	var selection_str = '';
-	for (var i = 0; i < Object.keys(selection_list).length; ++i) {
-		
-		if (i == 0){
-			selection_str += selection_list[i].join(',');
-		} else {
-			selection_str += ';' + selection_list[i].join(',');
-		}
-
-		// for each image
-		var keys = Object.keys(selection_list[i]);
-		selection_counts[i] = keys.length;
-	}
-	//console.log('n_selections:' + selection_counts.join(';'));
-	//console.log('selections:' + selection_str);
-	$('#n_selections').val(selection_counts.join(';'));
-	$('#selections').val(selection_str);
-	$('#post_json_str').val(json_str);
-   //onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 
 };
 
