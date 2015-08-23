@@ -361,8 +361,12 @@ function renderLabels(label_segs){
 		var html_submit_str = '';
 		if (page.mode == 'amt') {
 	      html_submit_str = '<table>'
-					+ '<tr><td>'
-      	 	   + '<form action="' + submitURL + '">'
+					+ '<tr>'
+					+ '<td>'
+					+ '<button disabled="true" type="button" style="height:50px; width:1000px" id="mt_submit" name="Submit" onclick="onSubmit(this);">Submit HIT </button>'
+       			+ '</td>'
+					+ '<td>'
+      	 	   + '<form id="amt-form" action="' + submitURL + '">'
 					+ '<input type="hidden" id="assignmentId" name="assignmentId" value="'+ page.assignmentId +'" />'
 					+ '<input type="hidden" id="turkSubmitTo" name="turkSubmitTo" value="'+ page.turkSubmitTo +'" />'
 					+ '<input type="hidden" id="hitId" name="hitId" value="'+ page.hitId +'" />'
@@ -373,7 +377,7 @@ function renderLabels(label_segs){
 					+ '<input type="hidden" id="frame_names" name="frame_names" value="' + page.frame_names.join(';') + '" />'
 					+ '<input type="hidden" id="post_json_str" name="post_json_str" value="" />'
 					+ '<input type="hidden" id="mt_comments" name="mt_comments" value="" />'
-					+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
+					//+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
 						//onmousedown="javascript:document.getElementById(\'mt_comments\').value=document.getElementById(\'mt_comments_textbox\').value;" />'
 					+ '</form>'
 					+ '</td></tr></table>';
@@ -383,12 +387,8 @@ function renderLabels(label_segs){
 
 	      html_submit_str = '<table>'
 					+ '<tr><td>'
-					+ '<input type="hidden" id="n_selections" name="n_selections" value="" />'
-					+ '<input type="hidden" id="selections" name="selections" value="" />'
-					+ '<input type="hidden" id="video" name="video" value="' + page.video + '" />'
-					+ '<input type="hidden" id="frame_names" name="frame_names" value="' + page.frame_names.join(';') + '" />'
-					+ '<input type="hidden" id="post_json_str" name="post_json_str" value="" />'
-					+ '<input disabled="true" type="submit" style="height:50px; width:1000px" id="mt_submit" name="Submit" value="Submit HIT" onclick="onSubmit(this);" />'
+					+ '<button disabled="true" type="button" style="height:50px; width:1000px" id="mt_submit" name="Submit" onclick="onSubmit(this);">Submit HIT </button>'
+					+ '</td></tr></table>';
 		}	
 		$('#anno_region').append(html_submit_str);
 
@@ -411,17 +411,17 @@ function createJSONString(video_name, frame_names, frameId_key, selection_list, 
 		var frame_id = frame_name.substring(0, frame_name.length-4);
 		var frame_key = frameId_key[frame_id];
 
-		var image_str = '{"gt_labels": ';	
+		var image_str = '{\"gt_labels\": ';	
 		var label_str = '[';
 		for (var j = 0; j < selection_list[frame_key].length; ++j){
 			
 			var select_value = selection_list[frame_key][j];
 			
 			var element_str = '[';
-			element_str += '"' + select_value + '"';
+			element_str += '\"' + select_value + '\"';
 			while (select_value in is_a_relation[frame_key]) {
 				select_value = is_a_relation[frame_key][select_value];
-				element_str += ', "' + select_value + '"';
+				element_str += ', \"' + select_value + '\"';
 			}
 			element_str += ']';
 			
@@ -435,9 +435,9 @@ function createJSONString(video_name, frame_names, frameId_key, selection_list, 
 		image_str += label_str;
 
 		//adding frame_name
-		image_str += ', "frame_name": "' + frame_name + '"';
+		image_str += ', \"frame_name\": \"' + frame_name + '\"';
 		//adding video_name
-		image_str += ', "video_name": "' + video_name + '"';
+		image_str += ', \"video_name\": \"' + video_name + '\"';
 		image_str += '}';
 		
 		if (i == 0) {
@@ -461,7 +461,7 @@ function onSubmit(event){
 
 	// creating the posting json string for all images	
 	var json_str = createJSONString(page.video, page.frame_names, page.frameId_key, selection_list, is_a_relation);
-	console.log(json_str);
+	//console.log(json_str);
 		
    if (window.XMLHttpRequest) {
       var xml_http = new XMLHttpRequest();
@@ -472,16 +472,23 @@ function onSubmit(event){
 			//console.log(xml_http);
 			if(xml_http.readyState == 4 && xml_http.status == 200) {
 				console.log(xml_http.responseText);
+			
 				if (page.mode != 'amt') {
-					// direct page
-					// to next page
+					// direct page to next page
 					var segs = page.mode.split('_');
 					var vid = parseInt(segs[1]) + 1;
 					window.location = 'https://elmo.csail.mit.edu/amt/index.html?mode=' + segs[0] + '_' + vid.toString();
+
+				} else if (page.mode == 'amt') {
+					document.getElementById("amt-form").submit();
 				}
+			} else { // httppost failed
+
+				if (page.mode == 'amt') { // handle it afterwards
+					document.getElementById("amt-form").submit();
+				}	
 			}
 		}
-		
       xml_http.send('json_str=' + json_str);
 	} 
 
@@ -511,7 +518,7 @@ function onSubmit(event){
 
 
 function onCheck(event){
-	console.log(event.value);
+	//console.log(event.value);
 	var select_value = event.value	
 
 	var segs = select_value.split('-');

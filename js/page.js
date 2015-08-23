@@ -48,7 +48,7 @@ function page(){
 				if (par_field == 'frame_names') {
 					frames = par_value.split(';');	
 					this.frame_names = frames;
-					console.log(this.frame_names);
+					//console.log(this.frame_names);
 					for (var i = 0; i < frames.length; i++){
 						this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
 						this.frameId_key[this.frame_ids[i]] = i;
@@ -136,7 +136,7 @@ function page(){
 				
 			// Load all frames
 			// Use a default example
-			this.frame_names = ['0.jpg', '60.jpg', '2128.jpg'];
+			this.frame_names = ['0.jpg'];
 			var frames = this.frame_names;
 			for (var i = 0; i < frames.length; i++){
 				this.frame_ids[i] = frames[i].substring(0, frames[i].length-4);
