@@ -30,7 +30,8 @@ if __name__ == "__main__":
 		for frame_name in frame_names:
 			if os.path.exists(os.path.join('/var/www/amt/labels', video, frame_name.split('.')[0] + '.json')):
 				logged_frame_count += 1
-
+			else:
+				print row['Answer.post_json_str']
 	print 'Correctly posted to the server:'
 	print logged_frame_count, '/' , turker_labeled_frame_count, (logged_frame_count/(turker_labeled_frame_count * 1.0)) * 100
 	print 'Correctly post json to amt:'
