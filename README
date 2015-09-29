@@ -1,4 +1,4 @@
-# ./annos stores the sugggested labels
+# ./annos stores the suggested labels
    each video has a folder and each frame has a json file
 
 # ./labels stores the answers from turkers
